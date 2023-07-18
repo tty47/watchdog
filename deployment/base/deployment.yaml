@@ -1,0 +1,46 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: svcwatchdog
+  name: svcwatchdog
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: svcwatchdog
+  template:
+    metadata:
+      labels:
+        app: svcwatchdog
+    spec:
+      serviceAccountName: svcwatchdog
+      containers:
+      - name: svcwatchdog
+        image: ghcr.io/jrmanes/svcwatchdog:SET-IT
+        imagePullPolicy: Always
+        command:
+          - /bin/sh
+          - -c
+        args:
+          - ./svcwatchdog
+          #- ./svcwatchdog --config-file /config/config.yaml
+        env:
+        - name: POD_NAMESPACE
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.namespace
+        ports:
+        - containerPort: 8080
+        volumeMounts:
+        - name: config
+          mountPath: "/config"
+          readOnly: true
+        resources:
+          requests:
+            memory: "200Mi"
+            cpu: "200m"
+          limits:
+            memory: "250Mi"
+            cpu: "250m"
