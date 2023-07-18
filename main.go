@@ -9,6 +9,7 @@ import (
 	"os/signal"
 	"syscall"
 
+	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
@@ -37,13 +38,18 @@ func Run() {
 		log.Fatal(err)
 	}
 
-	// Log the names of the services
+	// Filter and log only the services of type LoadBalancer
 	for _, svc := range services.Items {
-		log.Println("----------------------")
-		log.Println(svc.Name)
-		log.Println(svc.GetObjectMeta().SetNamespace)
-		log.Println(svc.GetObjectMeta().GetName())
-		log.Println(svc.GetObjectMeta().GetManagedFields())
+		if svc.Spec.Type == corev1.ServiceTypeLoadBalancer {
+			log.Println("----------------------")
+			log.Println("Name:", svc.Name)
+			log.Println("Namespace:", svc.Namespace)
+			log.Println("ClusterIP:", svc.Spec.ClusterIP)
+			for _, ingress := range svc.Status.LoadBalancer.Ingress {
+				log.Println("Public IP:", ingress.IP)
+			}
+			// Add additional information you want to log
+		}
 	}
 
 	// Expose the services via OTEL (assuming you have the necessary OTEL components configured)
