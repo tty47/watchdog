@@ -3,8 +3,9 @@ WORKDIR /
 COPY go.mod go.sum ./
 # Download dependencies
 RUN go mod download
-COPY . .
-RUN CGO_ENABLED=0 GOOS=linux go build -o /go/bin/svcwatchdog ./cmd/main.go
+#COPY . .
+COPY svcwatchdog /go/bin/svcwatchdog
+#RUN CGO_ENABLED=0 GOOS=linux go build -o /go/bin/svcwatchdog ./main.go
 
 FROM alpine:latest
 WORKDIR /

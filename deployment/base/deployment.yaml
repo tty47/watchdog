@@ -18,7 +18,8 @@ spec:
       serviceAccountName: svcwatchdog
       containers:
       - name: svcwatchdog
-        image: ghcr.io/jrmanes/svcwatchdog:SET-IT
+        image: ghcr.io/jrmanes/svcwatchdog:latest
+        #image: ghcr.io/jrmanes/svcwatchdog:SET-IT
         imagePullPolicy: Always
         command:
           - /bin/sh
@@ -33,10 +34,10 @@ spec:
               fieldPath: metadata.namespace
         ports:
         - containerPort: 8080
-        volumeMounts:
-        - name: config
-          mountPath: "/config"
-          readOnly: true
+#        volumeMounts:
+#        - name: config
+#          mountPath: "/config"
+#          readOnly: true
         resources:
           requests:
             memory: "200Mi"

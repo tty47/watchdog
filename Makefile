@@ -37,9 +37,8 @@ docker_build_local_push:
 	docker push localhost:5000/${REPOSITORY_NAME}:latest
 
 docker_build_local_push_gh:
-	GOOS=linux go build -o ./svcwatchdog ./cmd/main.go
-	docker build  -f Dockerfile -t ${PROJECT_NAME} .
-	docker tag ${REGISTRY_NAME}:latest ${REGISTRY_NAME}/${PROJECT_NAME}:latest
+	GOOS=linux GOARCH=amd64 go build -o ./svcwatchdog ./main.go
+	docker build -f Dockerfile -t ${REGISTRY_NAME}/${PROJECT_NAME}:latest .
 	docker push ${REGISTRY_NAME}/${PROJECT_NAME}:latest
 
 docker_run:
@@ -48,5 +47,11 @@ docker_run:
 kubectl_apply:
 	kubectl delete -f ./deployment/deployment.yaml ;\
 	kubectl apply -f ./deployment/deployment.yaml
+
+kubectl_kustomize:
+	kubectl delete -k ./deployment/overlays/robusta-torch-1 ;\
+	kubectl apply -k ./deployment/overlays/robusta-torch-1
+
+kubectl_remote_kustomize_deploy: docker_build_local_push_gh kubectl_kustomize
 
 kubectl_deploy: docker_build_local_push kubectl_apply

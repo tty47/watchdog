@@ -10,11 +10,8 @@ metadata:
   name: svcwatchdog-role
 rules:
 - apiGroups: [""]
-  resources: ["pods"]
+  resources: ["services"]
   verbs: ["list", "get", "watch"]
-- apiGroups: [""]
-  resources: ["pods/exec"]
-  verbs: ["create"]
 - apiGroups: [""]
   resources: ["namespaces"]
   verbs: ["list", "get", "watch"]
