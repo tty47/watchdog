@@ -38,7 +38,7 @@ docker_build_local_push:
 
 docker_build_local_push_gh:
 	GOOS=linux GOARCH=amd64 go build -o ./svcwatchdog ./main.go
-	docker build -f Dockerfile -t ${REGISTRY_NAME}/${PROJECT_NAME}:latest .
+	docker build -f Dockerfile_local -t ${REGISTRY_NAME}/${PROJECT_NAME}:latest .
 	docker push ${REGISTRY_NAME}/${PROJECT_NAME}:latest
 
 docker_run:

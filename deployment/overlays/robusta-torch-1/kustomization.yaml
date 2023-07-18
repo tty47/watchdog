@@ -6,6 +6,12 @@ namespace: robusta-torch-1
 resources:
 - ../../base
 
+# we need to generate a different ConfigMap per node, due to they have different content
+configMapGenerator:
+  - name: otel-agent
+    files:
+      - configs/otel-agent.yaml
+
 images:
   - name: ghcr.io/jrmanes/svcwatchdog
     newTag: latest

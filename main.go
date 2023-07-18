@@ -3,17 +3,48 @@ package main
 import (
 	"context"
 	"fmt"
+	corev1 "k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/client-go/kubernetes"
+	"k8s.io/client-go/rest"
 	"log"
 	"net/http"
 	"os"
 	"os/signal"
 	"syscall"
 
-	corev1 "k8s.io/api/core/v1"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/client-go/kubernetes"
-	"k8s.io/client-go/rest"
+	"go.opentelemetry.io/otel"
+	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/metric"
 )
+
+var meter = otel.Meter("svcwatcher")
+
+func WithMetrics(loadBalancer string) error {
+	loadBalancersGauge, err := meter.Float64ObservableGauge(
+		"build_info",
+		metric.WithDescription("Celestia Node build information"),
+	)
+	if err != nil {
+		return err
+	}
+
+	callback := func(ctx context.Context, observer metric.Observer) error {
+		// Observe build info with labels
+		labels := metric.WithAttributes(
+			attribute.String("load_balancer", loadBalancer),
+		)
+
+		fmt.Println(labels)
+		observer.ObserveFloat64(loadBalancersGauge, 1, labels)
+
+		return nil
+	}
+
+	_, err = meter.RegisterCallback(callback, loadBalancersGauge)
+
+	return err
+}
 
 func Run() {
 	config, err := rest.InClusterConfig()
@@ -47,6 +78,11 @@ func Run() {
 			log.Println("ClusterIP:", svc.Spec.ClusterIP)
 			for _, ingress := range svc.Status.LoadBalancer.Ingress {
 				log.Println("Public IP:", ingress.IP)
+				// Register metrics with load balancer attribute
+				err := WithMetrics(ingress.IP)
+				if err != nil {
+					log.Printf("Failed to register metrics for load balancer %s: %v", ingress.IP, err)
+				}
 			}
 			// Add additional information you want to log
 		}
