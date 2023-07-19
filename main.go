@@ -3,10 +3,7 @@ package main
 import (
 	"context"
 	"fmt"
-	corev1 "k8s.io/api/core/v1"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/client-go/kubernetes"
-	"k8s.io/client-go/rest"
+	"go.opentelemetry.io/otel/attribute"
 	"log"
 	"net/http"
 	"os"
@@ -14,34 +11,42 @@ import (
 	"syscall"
 
 	"go.opentelemetry.io/otel"
-	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/metric"
+
+	corev1 "k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/client-go/kubernetes"
+	"k8s.io/client-go/rest"
 )
 
 var meter = otel.Meter("svcwatcher")
 
 func WithMetrics(loadBalancer string) error {
+	fmt.Println("WithMetrics")
+	fmt.Println("loadBalancer to register: ", loadBalancer)
+
 	loadBalancersGauge, err := meter.Float64ObservableGauge(
-		"build_info",
-		metric.WithDescription("Celestia Node build information"),
+		"load_balancer",
+		metric.WithDescription("Service Watch Dog - Load Balancers"),
 	)
 	if err != nil {
+		log.Fatalf(err.Error())
 		return err
 	}
 
+	loadBalancer = "mec"
 	callback := func(ctx context.Context, observer metric.Observer) error {
 		// Observe build info with labels
 		labels := metric.WithAttributes(
 			attribute.String("load_balancer", loadBalancer),
 		)
-
-		fmt.Println(labels)
 		observer.ObserveFloat64(loadBalancersGauge, 1, labels)
 
 		return nil
 	}
 
 	_, err = meter.RegisterCallback(callback, loadBalancersGauge)
+	fmt.Println("loadBalancersGauge", loadBalancersGauge)
 
 	return err
 }
@@ -51,8 +56,8 @@ func Run() {
 	if err != nil {
 		log.Fatalf(err.Error())
 	}
-	// creates the clientset
-	clientset, err := kubernetes.NewForConfig(config)
+	// creates the clientSet
+	clientSet, err := kubernetes.NewForConfig(config)
 	if err != nil {
 		log.Fatalf(err.Error())
 	}
@@ -64,7 +69,7 @@ func Run() {
 	}
 
 	// Get all services in the namespace
-	services, err := clientset.CoreV1().Services(namespace).List(context.Background(), metav1.ListOptions{})
+	services, err := clientSet.CoreV1().Services(namespace).List(context.Background(), metav1.ListOptions{})
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -78,18 +83,16 @@ func Run() {
 			log.Println("ClusterIP:", svc.Spec.ClusterIP)
 			for _, ingress := range svc.Status.LoadBalancer.Ingress {
 				log.Println("Public IP:", ingress.IP)
+				fmt.Printf("Public IP:", ingress.IP)
 				// Register metrics with load balancer attribute
+				fmt.Println("registering metrics...")
 				err := WithMetrics(ingress.IP)
 				if err != nil {
 					log.Printf("Failed to register metrics for load balancer %s: %v", ingress.IP, err)
 				}
 			}
-			// Add additional information you want to log
 		}
 	}
-
-	// Expose the services via OTEL (assuming you have the necessary OTEL components configured)
-	// Your OTEL configuration and logic here
 }
 
 func main() {
@@ -106,7 +109,7 @@ func main() {
 	go func() {
 		log.Println("Starting HTTP server...")
 		http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
-			fmt.Fprintln(w, "Service Watch Dog is running!")
+			Run()
 		})
 		if err := http.ListenAndServe(":8080", nil); err != nil {
 			log.Fatalf("HTTP server error: %v", err)
