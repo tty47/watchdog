@@ -8,9 +8,14 @@ metadata:
   namespace: default
 spec:
   ports:
-  - port: 8080
-    protocol: TCP
-    targetPort: 8080
+    - port: 8080
+      protocol: TCP
+      targetPort: 8080
+      name: http
+    - port: 9090
+      protocol: TCP
+      targetPort: 9090
+      name: prometheus
   selector:
     app: svcwatchdog
   type: ClusterIP

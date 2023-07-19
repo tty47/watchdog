@@ -15,10 +15,6 @@ spec:
       labels:
         app: svcwatchdog
     spec:
-      volumes:
-        - name: otel-agent
-          configMap:
-            name: otel-agent
       serviceAccountName: svcwatchdog
       containers:
       - name: svcwatchdog
@@ -39,8 +35,8 @@ spec:
         ports:
           - name: http
             containerPort: 8080
-          - name: myapp-http
-            containerPort: 9090
+#          - name: prometheus
+#            containerPort: 9090
         resources:
           requests:
             memory: "200Mi"
@@ -60,12 +56,12 @@ spec:
         volumeMounts:
           - name: otel-agent
             mountPath: "/conf/otel-agent.yaml"
-            subPath: otel-agent.yaml
+            subPath: otel-agent-celestia.yaml
         ports:
           - name: prometheus-otel
             containerPort: 8888
           - name: prometheus
-            containerPort: 26660
+            containerPort: 9090
         resources:
           requests:
             cpu: 100m
@@ -73,3 +69,7 @@ spec:
           limits:
             # cpu: https://home.robusta.dev/blog/stop-using-cpu-limits
             memory: 200Mi
+      volumes:
+        - name: otel-agent
+          configMap:
+            name: otel-agent
