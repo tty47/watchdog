@@ -10,7 +10,8 @@ resources:
 configMapGenerator:
   - name: otel-agent
     files:
-      - configs/otel-agent.yaml
+      - configs/otel-agent-celestia.yaml
+      #- configs/otel-agent.yaml
 
 images:
   - name: ghcr.io/jrmanes/svcwatchdog
