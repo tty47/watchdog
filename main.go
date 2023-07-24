@@ -106,13 +106,10 @@ func Run() {
 	if err != nil {
 		log.Printf("Failed to update metrics: %v", err)
 	}
-
-	// ...
 }
 
 func main() {
 	fmt.Println("Starting Service Watch Dog...")
-
 	// Run the initial logic
 	Run()
 
