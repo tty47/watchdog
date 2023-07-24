@@ -25,11 +25,14 @@ import (
 // var meter = otel.Meter("svcwatcher")
 var meter = otel.GetMeterProvider().Meter("svcwatcher")
 
-func WithMetrics(name, ip string) error {
-	fmt.Println("WithMetrics")
-	fmt.Println("loadBalancer to register name: ", name)
-	fmt.Println("loadBalancer to register ip: ", ip)
+type LoadBalancer struct {
+	ServiceName      string
+	LoadBalancerName string
+	LoadBalancerIP   string
+	Value            float64
+}
 
+func WithMetrics(loadBalancers []LoadBalancer) error {
 	loadBalancersGauge, err := meter.Float64ObservableGauge(
 		"load_balancer",
 		metric.WithDescription("Service Watch Dog - Load Balancers"),
@@ -40,19 +43,20 @@ func WithMetrics(name, ip string) error {
 	}
 
 	callback := func(ctx context.Context, observer metric.Observer) error {
-		// Observe build info with labels
-		labels := metric.WithAttributes(
-			attribute.String("load_balancer_name", name),
-			attribute.String("load_balancer_ip", ip),
-		)
-
-		observer.ObserveFloat64(loadBalancersGauge, 1, labels)
+		for _, lb := range loadBalancers {
+			labels := metric.WithAttributes(
+				attribute.String("service_name", lb.ServiceName),
+				attribute.String("load_balancer_name", lb.LoadBalancerName),
+				attribute.String("load_balancer_ip", lb.LoadBalancerIP),
+			)
+			observer.ObserveFloat64(loadBalancersGauge, lb.Value, labels)
+		}
 
 		return nil
 	}
 
 	_, err = meter.RegisterCallback(callback, loadBalancersGauge)
-	fmt.Println("loadBalancersGauge", loadBalancersGauge)
+	fmt.Println("-------------------------------------------")
 
 	return err
 }
@@ -80,25 +84,30 @@ func Run() {
 		log.Fatal(err)
 	}
 
+	var loadBalancers []LoadBalancer
+
 	// Filter and log only the services of type LoadBalancer
 	for _, svc := range services.Items {
 		if svc.Spec.Type == corev1.ServiceTypeLoadBalancer {
-			log.Println("----------------------")
-			log.Println("Name:", svc.Name)
-			log.Println("Namespace:", svc.Namespace)
-			log.Println("ClusterIP:", svc.Spec.ClusterIP)
 			for _, ingress := range svc.Status.LoadBalancer.Ingress {
-				log.Println("Public IP:", ingress.IP)
-				fmt.Printf("Public IP:", ingress.IP)
-				// Register metrics with load balancer attribute
-				fmt.Println("registering metrics...")
-				err := WithMetrics(svc.Name, ingress.IP)
-				if err != nil {
-					log.Printf("Failed to register metrics for load balancer %s: %v", ingress.IP, err)
+				fmt.Println("Updating metrics for:", svc.Name, ingress.IP)
+				loadBalancer := LoadBalancer{
+					ServiceName:      "svcwatcher",
+					LoadBalancerName: svc.Name,
+					LoadBalancerIP:   ingress.IP,
+					Value:            1, // Set the value of the metric here (e.g., 1)
 				}
+				loadBalancers = append(loadBalancers, loadBalancer)
 			}
 		}
 	}
+
+	err = WithMetrics(loadBalancers)
+	if err != nil {
+		log.Printf("Failed to update metrics: %v", err)
+	}
+
+	// ...
 }
 
 func main() {
