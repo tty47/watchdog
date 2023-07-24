@@ -3,15 +3,18 @@ package main
 import (
 	"context"
 	"fmt"
-	"go.opentelemetry.io/otel/attribute"
 	"log"
 	"net/http"
 	"os"
 	"os/signal"
 	"syscall"
 
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"go.opentelemetry.io/otel"
+	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/exporters/prometheus"
 	"go.opentelemetry.io/otel/metric"
+	sdkmetric "go.opentelemetry.io/otel/sdk/metric"
 
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -19,11 +22,13 @@ import (
 	"k8s.io/client-go/rest"
 )
 
-var meter = otel.Meter("svcwatcher")
+// var meter = otel.Meter("svcwatcher")
+var meter = otel.GetMeterProvider().Meter("svcwatcher")
 
-func WithMetrics(loadBalancer string) error {
+func WithMetrics(name, ip string) error {
 	fmt.Println("WithMetrics")
-	fmt.Println("loadBalancer to register: ", loadBalancer)
+	fmt.Println("loadBalancer to register name: ", name)
+	fmt.Println("loadBalancer to register ip: ", ip)
 
 	loadBalancersGauge, err := meter.Float64ObservableGauge(
 		"load_balancer",
@@ -34,12 +39,13 @@ func WithMetrics(loadBalancer string) error {
 		return err
 	}
 
-	loadBalancer = "mec"
 	callback := func(ctx context.Context, observer metric.Observer) error {
 		// Observe build info with labels
 		labels := metric.WithAttributes(
-			attribute.String("load_balancer", loadBalancer),
+			attribute.String("load_balancer_name", name),
+			attribute.String("load_balancer_ip", ip),
 		)
+
 		observer.ObserveFloat64(loadBalancersGauge, 1, labels)
 
 		return nil
@@ -86,7 +92,7 @@ func Run() {
 				fmt.Printf("Public IP:", ingress.IP)
 				// Register metrics with load balancer attribute
 				fmt.Println("registering metrics...")
-				err := WithMetrics(ingress.IP)
+				err := WithMetrics(svc.Name, ingress.IP)
 				if err != nil {
 					log.Printf("Failed to register metrics for load balancer %s: %v", ingress.IP, err)
 				}
@@ -101,6 +107,13 @@ func main() {
 	// Run the initial logic
 	Run()
 
+	exporter, err := prometheus.New()
+	if err != nil {
+		log.Fatal(err)
+	}
+	provider := sdkmetric.NewMeterProvider(sdkmetric.WithReader(exporter))
+
+	otel.SetMeterProvider(provider)
 	// Create a channel to receive termination signals
 	stopChan := make(chan os.Signal, 1)
 	signal.Notify(stopChan, syscall.SIGINT, syscall.SIGTERM)
@@ -108,6 +121,7 @@ func main() {
 	// Start an HTTP server in a goroutine
 	go func() {
 		log.Println("Starting HTTP server...")
+		http.Handle("/metrics", promhttp.Handler())
 		http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 			Run()
 		})
