@@ -38,7 +38,7 @@ docker_build_local_push:
 	docker push localhost:5000/${REPOSITORY_NAME}:latest
 
 docker_build_local_push_gh:
-	GOOS=linux GOARCH=amd64 go build -o ./${PROJECT_NAME} ./main.go
+	GOOS=linux GOARCH=amd64 go build -o ./${PROJECT_NAME} ./*.go
 	docker build -f Dockerfile_local -t ${REGISTRY_NAME}/${PROJECT_NAME}:latest .
 	docker push ${REGISTRY_NAME}/${PROJECT_NAME}:latest
 
