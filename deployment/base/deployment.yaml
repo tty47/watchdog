@@ -18,15 +18,13 @@ spec:
       serviceAccountName: watchdog
       containers:
       - name: watchdog
-        image: ghcr.io/jrmanes/watchdog:latest
-        #image: ghcr.io/jrmanes/watchdog:SET-IT
+        image: ghcr.io/jrmanes/watchdog:SET-IT
         imagePullPolicy: Always
         command:
           - /bin/sh
           - -c
         args:
           - ./watchdog
-          #- ./watchdog --configs-file /configs/configs.yaml
         env:
         - name: POD_NAMESPACE
           valueFrom:
@@ -35,19 +33,13 @@ spec:
         ports:
           - name: http
             containerPort: 8080
-#          - name: prometheus
-#            containerPort: 9090
         resources:
           requests:
-            memory: "200Mi"
-            cpu: "200m"
+            memory: "50Mi"
+            cpu: "20m"
           limits:
-            memory: "250Mi"
-            cpu: "250m"
-#        volumeMounts:
-#        - name: configs
-#          mountPath: "/configs"
-#          readOnly: true
+            memory: "100Mi"
+            cpu: "100m"
       - name: otel-agent
         image: otel/opentelemetry-collector-contrib:0.71.0
         command:
@@ -67,7 +59,6 @@ spec:
             cpu: 100m
             memory: 100Mi
           limits:
-            # cpu: https://home.robusta.dev/blog/stop-using-cpu-limits
             memory: 200Mi
       volumes:
         - name: otel-agent
