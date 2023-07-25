@@ -1,4 +1,4 @@
-# Service WatchDog
+# WatchDog
 
 WatchDog is a monitoring service that automatically detects Load Balancer resources in a Kubernetes cluster and exposes metrics related to these Load Balancers. The service uses OpenTelemetry to instrument the metrics and Prometheus to expose them.
 
