@@ -12,8 +12,10 @@ import (
 	"k8s.io/client-go/rest"
 )
 
-// GetNamespace where the service will be deployed
+// GetNamespace retrieves the namespace where the service will be deployed
 func GetNamespace() string {
+	// Get the namespace from the environment variable "POD_NAMESPACE"
+	// If the variable is not set, return the default namespace "default"
 	namespace := os.Getenv("POD_NAMESPACE")
 	if namespace == "" {
 		return "default"
@@ -21,19 +23,19 @@ func GetNamespace() string {
 	return namespace
 }
 
-// ListServices retrieves the load balancers in a namespace
+// ListServices retrieves the list of services in a namespace
 func ListServices() (*corev1.ServiceList, error) {
-	// get the namespace
+	// Get the namespace
 	ns := GetNamespace()
 
-	// authentication in cluster - using SA, Role, RoleBinding
+	// Authentication in cluster - using Service Account, Role, RoleBinding
 	config, err := rest.InClusterConfig()
 	if err != nil {
 		log.Fatal(err)
 		return nil, err
 	}
 
-	// creates the clientSet
+	// Create the Kubernetes clientSet
 	clientSet, err := kubernetes.NewForConfig(config)
 	if err != nil {
 		log.Fatal(err)
@@ -50,9 +52,9 @@ func ListServices() (*corev1.ServiceList, error) {
 	return services, nil
 }
 
-// GetLoadBalancers filter by Load Balancers and return a list of them
+// GetLoadBalancers filters the list of services to include only Load Balancers and returns a list of them
 func GetLoadBalancers(svc *corev1.ServiceList) []LoadBalancer {
-	// get the namespace
+	// Get the namespace
 	ns := GetNamespace()
 	var loadBalancers []LoadBalancer
 
@@ -61,6 +63,7 @@ func GetLoadBalancers(svc *corev1.ServiceList) []LoadBalancer {
 		if svc.Spec.Type == corev1.ServiceTypeLoadBalancer {
 			for _, ingress := range svc.Status.LoadBalancer.Ingress {
 				fmt.Println("Updating metrics for:", svc.Name, ingress.IP)
+				// Create a LoadBalancer struct and append it to the loadBalancers list
 				loadBalancer := LoadBalancer{
 					ServiceName:      "watchdog",
 					LoadBalancerName: svc.Name,

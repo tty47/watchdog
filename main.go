@@ -17,7 +17,7 @@ import (
 // HTTP listening port
 const port = "8080"
 
-// Run generate the services metrics
+// Run generates the services metrics
 func Run() {
 	// Get list of LBs
 	svc, err := ListServices()
@@ -35,7 +35,7 @@ func Run() {
 	}
 }
 
-// InitConfig initialize the configs Prometheus - OTEL
+// InitConfig initializes the configs Prometheus - OTEL
 func InitConfig() {
 	// Initialize the Prometheus exporter
 	exporter, err := prometheus.New()

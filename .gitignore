@@ -3,4 +3,4 @@
 .code
 .vscode
 watchdog
-deployment/overlays/robusta-torch-1/configs/otel-agent-celestia.yaml
+deployment/overlays/local_dev/configs/otel-agent-celestia.yaml

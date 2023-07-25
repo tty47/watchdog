@@ -1,7 +1,7 @@
 PROJECT_NAME=watchdog
 REPOSITORY_NAME=watchdog
 REGISTRY_NAME=ghcr.io/jrmanes
-LOCAL_DEV=robusta-torch-1
+LOCAL_DEV=local_dev
 
 # Go
 .PHYONY: run build test test_cover get docs clean_bin

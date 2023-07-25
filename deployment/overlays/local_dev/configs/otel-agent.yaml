@@ -12,12 +12,6 @@ exporters:
 
 processors:
   batch:
-  memory_limiter:
-    # 80% of maximum memory up to 2G
-    limit_mib: 400
-    # 25% of limit up to 2G
-    spike_limit_mib: 100
-    check_interval: 5s
 
 service:
   pipelines:
@@ -27,4 +21,4 @@ service:
     traces:
       receivers: [otlp]
       exporters: [otlphttp]
-      processors: [memory_limiter, batch]
+      processors: [batch]
