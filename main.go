@@ -17,6 +17,7 @@ import (
 // HTTP listening port
 const port = "8080"
 
+// Run generate the services metrics
 func Run() {
 	// Get list of LBs
 	svc, err := ListServices()
@@ -34,6 +35,7 @@ func Run() {
 	}
 }
 
+// InitConfig initialize the configs Prometheus - OTEL
 func InitConfig() {
 	// Initialize the Prometheus exporter
 	exporter, err := prometheus.New()
@@ -46,20 +48,12 @@ func InitConfig() {
 }
 
 func main() {
-	fmt.Println("[INFO] Starting Service Watch Dog...")
-	// Run the initial logic
-	//Run()
+	fmt.Println("[INFO] Starting Service WatchDog...")
 
-	// Initialize the Prometheus exporter
-	//exporter, err := prometheus.New()
-	//if err != nil {
-	//	log.Fatal(err)
-	//}
-	//provider := sdkmetric.NewMeterProvider(sdkmetric.WithReader(exporter))
-	//
-	//otel.SetMeterProvider(provider)
-
+	// Initialize the config
 	InitConfig()
+	// Generate initial metrics
+	Run()
 
 	// Create a channel to receive termination signals
 	stopChan := make(chan os.Signal, 1)
@@ -67,7 +61,7 @@ func main() {
 
 	// Start an HTTP server in a goroutine
 	go func() {
-		log.Println("[INFO] Starting HTTP server...")
+		log.Println("[INFO] Starting HTTP server listening on port:", port)
 		// prometheus endpoint
 		http.Handle("/metrics", promhttp.Handler())
 		// Run function
