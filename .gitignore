@@ -1,4 +1,4 @@
 .DS_Store
 .idea
-svcwatchdog
+watchdog
 deployment/overlays/robusta-torch-1/configs/otel-agent-celestia.yaml

@@ -1,5 +1,5 @@
-PROJECT_NAME=svcwatchdog
-REPOSITORY_NAME=svcwatchdog
+PROJECT_NAME=watchdog
+REPOSITORY_NAME=watchdog
 REGISTRY_NAME=ghcr.io/jrmanes
 LOCAL_DEV=robusta-torch-1
 

@@ -3,30 +3,30 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   labels:
-    app: svcwatchdog
-  name: svcwatchdog
+    app: watchdog
+  name: watchdog
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: svcwatchdog
+      app: watchdog
   template:
     metadata:
       labels:
-        app: svcwatchdog
+        app: watchdog
     spec:
-      serviceAccountName: svcwatchdog
+      serviceAccountName: watchdog
       containers:
-      - name: svcwatchdog
-        image: ghcr.io/jrmanes/svcwatchdog:latest
-        #image: ghcr.io/jrmanes/svcwatchdog:SET-IT
+      - name: watchdog
+        image: ghcr.io/jrmanes/watchdog:latest
+        #image: ghcr.io/jrmanes/watchdog:SET-IT
         imagePullPolicy: Always
         command:
           - /bin/sh
           - -c
         args:
-          - ./svcwatchdog
-          #- ./svcwatchdog --configs-file /configs/configs.yaml
+          - ./watchdog
+          #- ./watchdog --configs-file /configs/configs.yaml
         env:
         - name: POD_NAMESPACE
           valueFrom:

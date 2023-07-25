@@ -3,12 +3,12 @@ apiVersion: monitoring.coreos.com/v1
 kind: ServiceMonitor
 metadata:
   labels:
-    app: svcwatchdog-metrics
-  name: svcwatchdog-metrics
+    app: watchdog-metrics
+  name: watchdog-metrics
 spec:
   selector:
     matchLabels:
-      app: svcwatchdog-metrics
+      app: watchdog-metrics
   targetLabels:
     - app
     - environment

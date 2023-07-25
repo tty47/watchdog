@@ -3,9 +3,9 @@ WORKDIR /
 COPY go.mod go.sum ./
 # Download dependencies
 RUN go mod download
-COPY svcwatchdog /go/bin/svcwatchdog
+COPY watchdog /go/bin/watchdog
 
 FROM alpine:latest
 WORKDIR /
-COPY --from=builder /go/bin/svcwatchdog .
-ENTRYPOINT ["./svcwatchdog"]
+COPY --from=builder /go/bin/watchdog .
+ENTRYPOINT ["./watchdog"]

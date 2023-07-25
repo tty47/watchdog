@@ -1,4 +1,4 @@
-module github.com/jrmanes/svcwatchdog
+module github.com/jrmanes/watchdog
 
 go 1.20
 

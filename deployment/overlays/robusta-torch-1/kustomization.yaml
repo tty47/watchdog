@@ -14,5 +14,5 @@ configMapGenerator:
       #- configs/otel-agent.yaml
 
 images:
-  - name: ghcr.io/jrmanes/svcwatchdog
+  - name: ghcr.io/jrmanes/watchdog
     newTag: latest
