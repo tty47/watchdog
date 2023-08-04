@@ -10,9 +10,10 @@ resources:
 configMapGenerator:
   - name: otel-agent
     files:
-      - configs/otel-agent-celestia.yaml
-      #- configs/otel-agent.yaml
+      - configs/otel-agent.yaml
 
 images:
   - name: ghcr.io/jrmanes/watchdog
     newTag: latest
+  - name: otel/opentelemetry-collector-contrib
+    newTag: 0.71.0
