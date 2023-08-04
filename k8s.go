@@ -24,10 +24,7 @@ func GetNamespace() string {
 }
 
 // ListServices retrieves the list of services in a namespace
-func ListServices() (*corev1.ServiceList, error) {
-	// Get the namespace
-	ns := GetNamespace()
-
+func ListServices(namespace string) (*corev1.ServiceList, error) {
 	// Authentication in cluster - using Service Account, Role, RoleBinding
 	config, err := rest.InClusterConfig()
 	if err != nil {
@@ -43,7 +40,7 @@ func ListServices() (*corev1.ServiceList, error) {
 	}
 
 	// Get all services in the namespace
-	services, err := clientSet.CoreV1().Services(ns).List(context.Background(), metav1.ListOptions{})
+	services, err := clientSet.CoreV1().Services(namespace).List(context.Background(), metav1.ListOptions{})
 	if err != nil {
 		log.Fatal(err)
 		return nil, err
@@ -54,11 +51,8 @@ func ListServices() (*corev1.ServiceList, error) {
 
 // GetLoadBalancers filters the list of services to include only Load Balancers and returns a list of them
 func GetLoadBalancers(svc *corev1.ServiceList) []LoadBalancer {
-	// Get the namespace
-	ns := GetNamespace()
 	var loadBalancers []LoadBalancer
 
-	// Filter only the services of type LoadBalancer
 	for _, svc := range svc.Items {
 		if svc.Spec.Type == corev1.ServiceTypeLoadBalancer {
 			for _, ingress := range svc.Status.LoadBalancer.Ingress {
@@ -68,7 +62,7 @@ func GetLoadBalancers(svc *corev1.ServiceList) []LoadBalancer {
 					ServiceName:      "watchdog",
 					LoadBalancerName: svc.Name,
 					LoadBalancerIP:   ingress.IP,
-					Namespace:        ns,
+					Namespace:        svc.Namespace,
 					Value:            1, // Set the value of the metric here (e.g., 1)
 				}
 				loadBalancers = append(loadBalancers, loadBalancer)
@@ -77,4 +71,40 @@ func GetLoadBalancers(svc *corev1.ServiceList) []LoadBalancer {
 	}
 
 	return loadBalancers
+}
+
+// WatchServices watches for changes to the services in the specified namespace and updates the metrics accordingly
+func WatchServices(namespace string) {
+	// Authentication in cluster - using Service Account, Role, RoleBinding
+	config, err := rest.InClusterConfig()
+	if err != nil {
+		log.Fatal(err)
+		return
+	}
+
+	// Create the Kubernetes clientSet
+	clientSet, err := kubernetes.NewForConfig(config)
+	if err != nil {
+		log.Fatal(err)
+		return
+	}
+
+	// Create a service watcher
+	watcher, err := clientSet.CoreV1().Services(namespace).Watch(context.Background(), metav1.ListOptions{})
+	if err != nil {
+		log.Fatal(err)
+		return
+	}
+
+	// Watch for events on the watcher channel
+	for event := range watcher.ResultChan() {
+		if service, ok := event.Object.(*corev1.Service); ok {
+			if service.Spec.Type == corev1.ServiceTypeLoadBalancer {
+				// Get the list of Load Balancers from the single service
+				loadBalancers := GetLoadBalancers(&corev1.ServiceList{Items: []corev1.Service{*service}})
+				// Update the metrics with the Load Balancers
+				WithMetricsLoadBalancer(loadBalancers)
+			}
+		}
+	}
 }
