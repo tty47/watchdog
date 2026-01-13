@@ -75,4 +75,3 @@ You can customize the Service WatchDog to suit your specific needs. For example,
 
 ---
 
-Jose Ramon Mañes
